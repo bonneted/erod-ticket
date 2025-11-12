@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Main Queue{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h1>Queue</h1>
+    <div class="d-flex align-items-center mb-3">
+      <div>
+        <img src="data:image/png;base64,{{ qr_img }}" alt="register-qr" style="width:110px;height:110px;" class="me-3" />
+      </div>
+      <div>
+        <div>Scan to register</div>
+        <div class="text-muted small">Or visit: <a href="{{ url_for('register') }}">{{ url_for('register', _external=True) }}</a></div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="tour-length" class="form-label">Tour length (minutes)</label>
+      <div class="input-group mb-3" style="max-width:260px;">
+        <input type="number" id="tour-length" class="form-control" min="1" value="5">
+        <button id="set-tour-btn" class="btn btn-outline-secondary">Set</button>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <div class="d-flex align-items-center">
+        <div id="timer-display" class="me-3 fs-4">--:--</div>
+        <div class="progress flex-grow-1">
+          <div id="timer-progress" class="progress-bar" role="progressbar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <button id="next-btn" class="btn btn-primary me-2">Next</button>
+      <button id="back-btn" class="btn btn-secondary me-2">Back</button>
+      <button id="pause-btn" class="btn btn-warning me-2">Pause</button>
+      <button id="toggle-drag-btn" class="btn btn-outline-info me-2">Enable reorder</button>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Waiting List</h5>
+        <ul id="waiting-list" class="list-group">
+          <!-- items updated by JS -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <h5>Already passed</h5>
+    <ul id="passed-list" class="list-group mb-3">
+      <!-- items updated by JS -->
+    </ul>
+
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Controls & Info</h6>
+        <div>Tour length: <span id="tour-length-display">5</span> min</div>
+        <div>Current status: <span id="status-label">Idle</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
