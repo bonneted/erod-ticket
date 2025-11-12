@@ -118,5 +118,42 @@ def test_auto_advance():
     assert len(data['passed']) >= 1
 
 
+def test_delete_passed_person():
+    client = app.test_client()
+    # Add two people and advance first
+    client.post('/register', json={'name':'Alpha'})
+    client.post('/register', json={'name':'Beta'})
+    client.post('/api/next')
+    res = client.get('/api/status')
+    data = res.get_json()
+    passed = data['passed']
+    assert len(passed) >= 1
+    pid = passed[0]['id']
+    # Delete passed person
+    r = client.delete(f'/api/person/{pid}')
+    assert r.status_code == 200
+    res2 = client.get('/api/status')
+    data2 = res2.get_json()
+    passed2 = data2['passed']
+    assert all(p['id'] != pid for p in passed2)
+
+
+def test_reset_clears_all():
+    client = app.test_client()
+    client.post('/register', json={'name':'One'})
+    client.post('/register', json={'name':'Two'})
+    # reset
+    res = client.post('/api/clear')
+    assert res.status_code == 200
+    res2 = client.get('/api/status')
+    data = res2.get_json()
+    assert data['waiting'] == [] and data['passed'] == []
+    # default setting exists
+    with app.app_context():
+        s = Setting.query.get(1)
+        assert s is not None
+        assert s.tour_length_seconds == 300
+
+
 if __name__ == '__main__':
     pytest.main(['-q'])

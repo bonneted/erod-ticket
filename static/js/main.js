@@ -41,13 +41,10 @@
   function updateWaiting(waiting, tourLengthSec){
     // Build new HTML
     waitingListEl.innerHTML = '';
-  waiting.forEach((p, idx) => {
+    waiting.forEach((p, idx) => {
       const li = document.createElement('li');
       li.className = 'list-group-item d-flex justify-content-between align-items-center';
       li.dataset.id = p.id;
-      if (idx === 0) {
-        li.classList.add('list-group-item-warning');
-      }
       // ETA in minutes
       const eta_mins = Math.max(0, Math.floor(((p.position - 1) * tourLengthSec) / 60));
       li.innerHTML = `<div><strong>${escapeHtml(p.name)}</strong> <small class="text-muted">(#${p.position})</small></div><span class="badge bg-primary rounded-pill">${eta_mins} min</span>`;
@@ -91,9 +88,9 @@
       const li = document.createElement('li');
       li.className = 'list-group-item';
       li.innerText = `${p.name}`;
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-sm btn-outline-primary float-end';
-      btn.innerText = 'Requeue';
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-sm btn-outline-primary float-end ms-2';
+  btn.innerText = 'Requeue';
       btn.addEventListener('click', async (ev)=>{
         ev.stopPropagation();
         try{
@@ -102,6 +99,19 @@
         }catch(e){ console.error('move failed', e); }
       });
       li.appendChild(btn);
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-outline-danger float-end';
+      delBtn.innerText = 'Delete';
+      delBtn.addEventListener('click', async (ev)=>{
+        ev.stopPropagation();
+        if (!confirm('Delete this person? This cannot be undone.')) return;
+        try{
+          const res = await fetch(`/api/person/${p.id}`, {method:'DELETE'});
+          if (!res.ok) throw new Error('Delete failed');
+          fetchStatus();
+        }catch(e){ console.error('delete failed', e); }
+      });
+      li.appendChild(delBtn);
       passedListEl.appendChild(li);
     });
   }

@@ -408,6 +408,9 @@ def api_move():
         return jsonify({'error': str(e)}), 400
 
 
+
+
+
 @app.route('/api/set-tour-length', methods=['POST'])
 def api_set_tour_length():
     data = request.get_json() or {}
@@ -448,6 +451,28 @@ def api_clear():
     db.session.commit()
     init_db()
     return jsonify({'message': 'cleared'})
+
+
+@app.route('/api/reset', methods=['POST'])
+def api_reset():
+    # Alias for clear
+    return api_clear()
+
+
+@app.route('/api/person/<int:person_id>', methods=['DELETE'])
+def api_delete_person(person_id):
+    p = Person.query.get(person_id)
+    if not p:
+        return jsonify({'error': 'not found'}), 404
+    # If removing from waiting, shift positions
+    if p.status == 'waiting' and p.position is not None:
+        waiting = Person.query.filter(Person.status == 'waiting').order_by(Person.position).all()
+        for w in waiting:
+            if w.position and w.position > p.position:
+                w.position -= 1
+    db.session.delete(p)
+    db.session.commit()
+    return jsonify({'message': 'deleted'})
 
 
 if __name__ == '__main__':
