@@ -220,7 +220,11 @@ def estimate_wait_minutes(person):
 def index():
     s = get_setting()
     # Generate QR code for register URL
-    register_url = url_for('register', _external=True)
+    root_url = os.environ.get('ROOT_URL')
+    if root_url:
+        register_url = root_url.rstrip('/') + url_for('register')
+    else:
+        register_url = url_for('register', _external=True)
     img = qrcode.make(register_url)
     buffer = BytesIO()
     img.save(buffer, format="PNG")

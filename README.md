@@ -80,6 +80,8 @@ git push -u origin main
 4) Env vars and ports
 
 - Railway uses the `PORT` environment variable and the app will respect it. For non-Railway environments, keep using `sqlite:///queue.db` as a fallback.
+ - Optionally, set `ROOT_URL` to your public Railway URL (for QR codes). For example: `https://your-project.up.railway.app`.
+	 The app will prefer `ROOT_URL` when generating the QR code for the register page so the QR resolves externally.
 
 5) Auto-deploy
 
