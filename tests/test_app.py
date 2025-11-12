@@ -155,5 +155,28 @@ def test_reset_clears_all():
         assert s.tour_length_seconds == 300
 
 
+def test_clear_persons_only():
+    client = app.test_client()
+    client.post('/register', json={'name':'One'})
+    client.post('/register', json={'name':'Two'})
+    # modify setting
+    with app.app_context():
+        s = Setting.query.get(1)
+        s.tour_length_seconds = 120
+        s.timer_paused = False
+        db.session.commit()
+    # clear persons
+    res = client.post('/api/clear-persons')
+    assert res.status_code == 200
+    # persons cleared
+    res2 = client.get('/api/status')
+    data = res2.get_json()
+    assert data['waiting'] == [] and data['passed'] == []
+    # setting remains
+    with app.app_context():
+        s2 = Setting.query.get(1)
+        assert s2.tour_length_seconds == 120
+
+
 if __name__ == '__main__':
     pytest.main(['-q'])

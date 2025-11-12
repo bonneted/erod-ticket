@@ -459,6 +459,17 @@ def api_reset():
     return api_clear()
 
 
+@app.route('/api/clear-persons', methods=['POST'])
+def api_clear_persons():
+    # Remove all persons but keep settings as-is (except start_time should be cleared)
+    Person.query.delete()
+    s = get_setting()
+    s.start_time = None
+    s.time_remaining_on_pause = None
+    db.session.commit()
+    return jsonify({'message': 'cleared persons'})
+
+
 @app.route('/api/person/<int:person_id>', methods=['DELETE'])
 def api_delete_person(person_id):
     p = Person.query.get(person_id)

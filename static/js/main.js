@@ -116,6 +116,17 @@
     });
   }
 
+  // Reset button handler (clears only persons, keeps settings)
+  const resetBtn = document.getElementById('reset-btn');
+  if (resetBtn){
+    resetBtn.addEventListener('click', async ()=>{
+      if (!confirm('Really clear ALL people in the waiting and passed lists? This will not change settings.')) return;
+      try{
+        await api('/api/clear-persons', {method: 'POST'});
+        fetchStatus();
+      }catch(e){ console.error('clear failed', e); }
+    });
+  }
   function updateTimer(timeRemainingSec, tourLengthSec, paused){
     if (timeRemainingSec === null){
       timerDisplayEl.innerText = '--:--';
