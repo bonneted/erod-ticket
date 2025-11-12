@@ -416,17 +416,28 @@ def api_set_tour_length():
     data = request.get_json() or {}
     value = data.get('seconds') or data.get('minutes')
     s = get_setting()
+    # Compute remaining seconds before changing:
+    if s.timer_paused:
+        old_remaining = s.time_remaining_on_pause if s.time_remaining_on_pause is not None else s.tour_length_seconds
+    else:
+        old_remaining = compute_time_remaining_seconds(s) or s.tour_length_seconds
+
     if 'minutes' in data and isinstance(data['minutes'], (int, float)):
         s.tour_length_seconds = int(data['minutes'] * 60)
     elif 'seconds' in data and isinstance(data['seconds'], (int, float)):
         s.tour_length_seconds = int(data['seconds'])
     else:
         return jsonify({'error': 'seconds or minutes required'}), 400
-    # Reset timer for new interval: if running, set start_time to now; if paused, set pause remaining to full
-    if not s.timer_paused:
-        s.start_time = datetime.utcnow()
+    # For paused timers, preserve old_remaining (capped by new length)
+    if s.timer_paused:
+        s.time_remaining_on_pause = min(old_remaining, s.tour_length_seconds)
     else:
-        s.time_remaining_on_pause = s.tour_length_seconds
+        # Preserve remaining time relative to the new interval, keep same time remaining seconds if possible
+        new_remaining = min(old_remaining, s.tour_length_seconds)
+        now = datetime.utcnow()
+        # start_time should be set so that tour_length_seconds - elapsed = new_remaining => elapsed = tour_length_seconds - new_remaining
+        elapsed = s.tour_length_seconds - new_remaining
+        s.start_time = now - timedelta(seconds=elapsed)
     db.session.commit()
     return jsonify({'message': 'tour length set', 'tour_length_seconds': s.tour_length_seconds})
 
@@ -453,10 +464,7 @@ def api_clear():
     return jsonify({'message': 'cleared'})
 
 
-@app.route('/api/reset', methods=['POST'])
-def api_reset():
-    # Alias for clear
-    return api_clear()
+## Deprecated: use /api/clear for full reset
 
 
 @app.route('/api/clear-persons', methods=['POST'])

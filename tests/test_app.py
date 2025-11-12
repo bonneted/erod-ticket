@@ -82,6 +82,32 @@ def test_set_tour_length():
     assert data['tour_length_seconds'] == 120
 
 
+def test_change_tour_length_preserves_remaining():
+    client = app.test_client()
+    # Add two people so that we have a current person
+    client.post('/register', json={'name':'P1'})
+    client.post('/register', json={'name':'P2'})
+    with app.app_context():
+        s = Setting.query.get(1)
+        # use longer intervals to avoid timing flakiness
+        s.tour_length_seconds = 60
+        s.start_time = datetime.utcnow() - timedelta(seconds=20)  # 20s elapsed -> remaining = 40s
+        s.timer_paused = False
+        db.session.commit()
+        from app import compute_time_remaining_seconds
+        old_remaining = compute_time_remaining_seconds(s)
+    assert abs(old_remaining - 40) <= 1
+    # Now change tour length to 10 seconds and ensure remaining stays same (3s)
+    res = client.post('/api/set-tour-length', json={'seconds': 120})
+    assert res.status_code == 200
+    # check compute_time_remaining_seconds
+    with app.app_context():
+        from app import compute_time_remaining_seconds
+        s2 = Setting.query.get(1)
+        rem_after = compute_time_remaining_seconds(s2)
+    assert abs(rem_after - 40) <= 2
+
+
 def test_move_endpoint():
     client = app.test_client()
     client.post('/register', json={'name':'Alice'})

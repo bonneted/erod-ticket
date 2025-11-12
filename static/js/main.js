@@ -14,6 +14,7 @@
 
   let sortable = null;
   let dragEnabled = false;
+  let editingTour = false;
 
   async function api(path, opts = {}){
     const res = await fetch(path, opts);
@@ -31,7 +32,10 @@
       updatePassed(data.passed);
       updateTimer(data.time_remaining_seconds, data.tour_length_seconds, data.timer_paused);
       tourLengthDisplay.innerText = Math.round(data.tour_length_seconds/60);
-      tourInput.value = Math.round(data.tour_length_seconds/60);
+      // Only update the input if the user isn't editing it (avoid overriding while typing)
+      if (!editingTour) {
+        tourInput.value = Math.round(data.tour_length_seconds/60);
+      }
       statusLabel.innerText = data.timer_paused ? 'Paused' : (data.time_remaining_seconds === null ? 'Idle' : 'Running');
     }catch(e){
       console.error('status fetch failed', e);
@@ -117,9 +121,9 @@
   }
 
   // Reset button handler (clears only persons, keeps settings)
-  const resetBtn = document.getElementById('reset-btn');
-  if (resetBtn){
-    resetBtn.addEventListener('click', async ()=>{
+  const clearBtn = document.getElementById('clear-btn');
+  if (clearBtn){
+    clearBtn.addEventListener('click', async ()=>{
       if (!confirm('Really clear ALL people in the waiting and passed lists? This will not change settings.')) return;
       try{
         await api('/api/clear-persons', {method: 'POST'});
@@ -188,6 +192,10 @@
       fetchStatus();
     }catch(e){ console.error(e); }
   });
+
+  // Avoid overriding user while editing the tour input
+  tourInput.addEventListener('focus', () => { editingTour = true; });
+  tourInput.addEventListener('blur', () => { editingTour = false; });
 
   toggleDragBtn.addEventListener('click', ()=>{
     dragEnabled = !dragEnabled;
